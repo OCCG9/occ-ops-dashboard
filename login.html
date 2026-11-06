@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OCC Ops Dashboard - Login</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  body {
+    background: linear-gradient(135deg, #a01f2d 0%, #7a1620 45%, #2563eb 100%);
+    min-height: 100vh;
+  }
+  .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .login-card {
+    background: #fff; border-radius: 12px; padding: 40px 40px 30px; width: 400px; max-width: calc(100vw - 32px); box-sizing: border-box;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35); border-left: none;
+  }
+  .login-title { text-align: center; margin-bottom: 4px; }
+  .login-title .plane { font-size: 34px; }
+  .login-title h2 { border: none; margin: 6px 0 0; color: #a01f2d; font-size: 20px; }
+  .login-sub { text-align: center; color: #666; font-size: 13px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">
+      <div class="plane">&#9992;&#65039;</div>
+      <h2>OCC Daily Operations Login</h2>
+    </div>
+    <p class="login-sub">Shift-based delay logging &amp; management snapshot reports</p>
+    <form id="loginForm">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button type="submit" style="width:100%;">Log in</button>
+    </form>
+    <div id="msg"></div>
+    <p class="small" style="text-align:center; margin-top:16px;">Forgotten your password? Ask an OCC administrator to reset it.</p>
+  </div>
+</div>
+<script src="js/config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/common.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>

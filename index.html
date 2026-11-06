@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; base-uri 'self'; form-action 'self'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OCC Daily Operations Dashboard</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-top">
+    <h1>&#9992;&#65039; OCC Daily Operations Dashboard</h1>
+    <div class="topbar-right">
+      <span class="userbox" id="userbox"></span>
+      <a href="#" class="logoutLink" id="logoutLink">Logout</a>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="entry">Log Delay / Event</button>
+    <button class="tab-btn" data-tab="multi">Multiple Delayed Flight Event</button>
+    <button class="tab-btn" data-tab="report">Daily Report</button>
+    <button class="tab-btn" data-tab="admin" id="adminTabBtn" style="display:none;">Admin</button>
+    <button class="tab-btn" data-tab="account">My Account</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="tab-section" id="tab-dashboard">
+    <div class="card accent-blue">
+      <h2>Today's Snapshot</h2>
+      <div class="toolbar">
+        <label>Date</label>
+        <input type="date" id="dashDate">
+        <button class="secondary small-btn" id="dashRefreshBtn" style="margin-top:0;">Refresh</button>
+        <button class="small-btn" id="dashGoEntryBtn" style="margin-top:0;">+ Log New Delay / Event</button>
+      </div>
+      <div class="stat-tiles" id="statTiles"></div>
+    </div>
+    <div class="card accent-blue">
+      <h2>Logged Records</h2>
+      <div id="recordsTable">Loading...</div>
+    </div>
+  </section>
+
+  <!-- ============ ENTRY ============ -->
+  <section class="tab-section" id="tab-entry">
+    <div class="card accent-teal">
+      <h2>Log a Delay / Incident / GTB / ATB / Diversion</h2>
+      <p class="small">Type naturally - grammar and shortening isn't needed here. Spacing and capitalisation are tidied automatically when the daily management report is generated.</p>
+
+      <!-- Quick Paste from Notification -->
+      <div class="quick-paste-box" id="quickPasteBox">
+        <div class="quick-paste-header" id="quickPasteToggle">
+          <span class="quick-paste-icon">📋</span>
+          <span class="quick-paste-title">Quick Paste from Notification</span>
+          <span class="quick-paste-hint">Paste your flight notification and auto-fill the form</span>
+          <span class="quick-paste-chevron" id="quickPasteChevron">▼</span>
+        </div>
+        <div class="quick-paste-body" id="quickPasteBody">
+          <textarea id="quickPasteInput" class="quick-paste-textarea" placeholder="Paste your notification here, e.g.&#10;&#10;FLIGHT DELAY&#10;A6-ATA / G9 555 / SHJ - KHI&#10;DELAY DUE AIRCRAFT TECHNICAL&#10;&#10;Supports multiple lines and formats. Fields will be auto-detected."></textarea>
+          <div class="quick-paste-actions">
+            <button type="button" class="quick-paste-btn" id="quickParseBtn">⚡ Parse & Fill Form</button>
+            <button type="button" class="quick-paste-btn secondary" id="quickClearBtn">Clear</button>
+          </div>
+          <div id="quickPasteMsg"></div>
+        </div>
+      </div>
+
+      <form id="entryForm">
+        <div class="row">
+          <div>
+            <label for="record_date">Date</label>
+            <input type="date" id="record_date" name="record_date" required>
+          </div>
+          <div>
+            <label for="aoc">AOC <span class="small" id="aocAutoHint">(auto from flight number)</span></label>
+            <select id="aoc" name="aoc" required>
+              <option value="G9">G9</option>
+              <option value="E5">E5</option>
+              <option value="3L">3L</option>
+              <option value="3O">3O</option>
+              <option value="9P">9P</option>
+              <option value="4P">4P</option>
+            </select>
+          </div>
+          <div>
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              <option value="DELAY">Delay</option>
+              <option value="GTB">GTB (Ground Turn Back)</option>
+              <option value="ATB">ATB (Air Turn Back)</option>
+              <option value="INCIDENT">Incident</option>
+              <option value="DIVERSION">Diversion</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="flight_number">Flight Number</label>
+            <input id="flight_number" name="flight_number" placeholder="e.g. 3O828">
+          </div>
+          <div>
+            <label for="route">Route</label>
+            <input id="route" name="route" placeholder="e.g. CDG-RBA">
+          </div>
+          <div>
+            <label for="registration">Registration</label>
+            <input id="registration" name="registration" placeholder="e.g. A6-AUD">
+          </div>
+        </div>
+
+        <label for="reason">Reason / Description</label>
+        <textarea id="reason" name="reason" required placeholder="e.g. delayed due to aog, damage found on main wheel no 1 during walk around"></textarea>
+
+        <label style="margin-top:22px;">
+          <input type="checkbox" id="breakdownToggle" style="width:auto; display:inline-block; vertical-align:middle; margin-right:8px;">
+          Break the delay down into multiple reasons (a flight can be delayed for more than one reason)
+        </label>
+
+        <div id="manualDelayBox">
+          <label for="delay_minutes">Total Delay Duration (minutes)</label>
+          <input type="number" min="0" id="delay_minutes" name="delay_minutes" placeholder="e.g. 78">
+        </div>
+
+        <div id="breakdownBox" class="breakdown-box" style="display:none;">
+          <div id="breakdownRows"></div>
+          <button type="button" class="ghost small-btn" id="addBreakdownRowBtn">+ Add Reason</button>
+          <div class="breakdown-total" id="breakdownTotal">Total delay from breakdown: 0 minutes</div>
+        </div>
+
+        <label for="downstream_impact">Downstream / Rotational Impact (optional)</label>
+        <textarea id="downstream_impact" name="downstream_impact" placeholder="e.g. 3L141 AUH/MAA - 100 mins&#10;3L424 AUH/CAI - 35 mins"></textarea>
+
+        <button type="submit">Save Record</button>
+      </form>
+      <div id="entryMsg"></div>
+    </div>
+  </section>
+
+  <!-- ============ MULTIPLE DELAYED FLIGHT EVENT ============ -->
+  <section class="tab-section" id="tab-multi">
+    <div class="card accent-cyan">
+      <h2>Log One Delay Reason Affecting Multiple Flights</h2>
+      <p class="small">Use this when a single cause - a sandstorm, an airport-wide ATC slot restriction, one aircraft's knock-on rotation - delays several flights at once. Fill in the shared details once, then list every affected flight below; a separate record is saved for each flight, so they all show up individually on the Dashboard and in reports.</p>
+
+      <form id="multiForm">
+        <div class="row">
+          <div>
+            <label for="multi_record_date">Date</label>
+            <input type="date" id="multi_record_date" required>
+          </div>
+          <div>
+            <label for="multi_aoc">AOC <span class="small">(auto-detected per flight)</span></label>
+            <select id="multi_aoc" disabled>
+              <option value="G9">G9</option>
+              <option value="E5">E5</option>
+              <option value="3L">3L</option>
+              <option value="3O">3O</option>
+              <option value="9P">9P</option>
+              <option value="4P">4P</option>
+            </select>
+          </div>
+          <div>
+            <label for="multi_category">Category</label>
+            <select id="multi_category" required>
+              <option value="DELAY">Delay</option>
+              <option value="GTB">GTB (Ground Turn Back)</option>
+              <option value="ATB">ATB (Air Turn Back)</option>
+              <option value="INCIDENT">Incident</option>
+              <option value="DIVERSION">Diversion</option>
+            </select>
+          </div>
+        </div>
+
+        <label for="multi_reason">Reason / Description (shared by every flight below)</label>
+        <textarea id="multi_reason" required placeholder="e.g. airport-wide atc slot delay due to sandstorm"></textarea>
+        <label style="margin-top:22px;">Affected Flights</label>
+        <p class="small" style="margin-top:-4px;">Flight number format: <b>XXXXX</b> - the first two characters are the AOC (G9, E5, 3L, 3O, 9P or 4P), the last three are the flight number - e.g. <b>G9555</b>. The AOC above updates automatically from what you type here.</p>
+        <div id="multiFlightBox" class="breakdown-box">
+          <div class="mf-row mf-header">
+            <span>Flight No.</span>
+            <span>AOC</span>
+            <span>Route</span>
+            <span>Registration</span>
+            <span>Delay (mins)</span>
+            <span></span>
+          </div>
+          <div id="multiFlightRows"></div>
+          <button type="button" class="ghost small-btn" id="addMultiFlightRowBtn">+ Add Flight</button>
+        </div>
+
+        <!-- Free-text alternative to the structured rows above - nothing
+             typed here is parsed or reformatted; it's saved and shown in
+             the report exactly as written, alongside a single total delay
+             figure. Either method can be used, and both can be mixed. -->
+        <div class="quick-paste-box cyan-variant" id="mfFreeTextBox">
+          <div class="quick-paste-header" id="mfFreeTextToggle">
+            <span class="quick-paste-icon">📝</span>
+            <span class="quick-paste-title">Or Add Affected Flights as Free Text</span>
+            <span class="quick-paste-hint">Type the affected flights however you like - no format required - and just add the total delay</span>
+            <span class="quick-paste-chevron" id="mfFreeTextChevron">▼</span>
+          </div>
+          <div class="quick-paste-body" id="mfFreeTextBody">
+            <div id="mfFreeTextRows"></div>
+            <div class="quick-paste-actions">
+              <button type="button" class="quick-paste-btn" id="addMfFreeTextRowBtn">+ Add Free-Text Entry</button>
+            </div>
+          </div>
+        </div>
+
+        <label for="multi_downstream_impact">Downstream / Rotational Impact (optional, shared)</label>
+        <textarea id="multi_downstream_impact" placeholder="e.g. 3L141 AUH/MAA - 100 mins&#10;3L424 AUH/CAI - 35 mins"></textarea>
+
+        <div id="multiMsg"></div>
+
+        <button type="submit">Save Records</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ DAILY REPORT ============ -->
+  <section class="tab-section" id="tab-report">
+    <div class="card accent-purple no-print">
+      <h2>Daily Management Snapshot</h2>
+      <div class="rd-mode-row">
+        <label class="rd-mode"><input type="radio" name="delayMode" id="modeWindow" value="window" checked> Last 30 hours (from login)</label>
+        <label class="rd-mode"><input type="radio" name="delayMode" id="modeRange" value="range"> Date range</label>
+        <span id="rangeInputs" style="display:none;">
+          <label class="rd-range-label" for="rangeFrom">From</label>
+          <input type="date" id="rangeFrom">
+          <label class="rd-range-label" for="rangeTo">To</label>
+          <input type="date" id="rangeTo">
+          <button id="showRangeBtn" class="small-btn" type="button">Show Delays</button>
+        </span>
+      </div>
+      <p class="small" id="recentDelaysIntro">Delays logged in the last 30 hours (counted from the time you logged in) are listed below. Tick the delays you want in the report, then click <b>Generate Report</b>.</p>
+      <div class="toolbar">
+        <button id="refreshDelaysBtn" class="ghost small-btn">&#8635; Refresh List</button>
+        <button id="selectAllDelaysBtn" class="ghost small-btn">Select All</button>
+        <button id="clearDelaysBtn" class="ghost small-btn">Clear</button>
+        <span class="small" id="delaySelectionCount"></span>
+      </div>
+      <div id="recentDelaysList" class="recent-delays-list">Loading...</div>
+      <div class="toolbar" style="margin-top:14px;">
+        <button id="genBtn">Generate Report</button>
+        <button id="forceBtn" class="secondary">Regenerate</button>
+        <button id="editReportBtn" class="secondary">Edit Report</button>
+        <button id="printBtn" class="ghost">Print / Save as PDF</button>
+      </div>
+      <div id="reportStatus" class="small"></div>
+      <p class="small" id="editReportHint" style="display:none;">Editing mode is on - click any text in the report below to amend it by hand. These manual changes are not saved to the database; they stay on screen for printing/exporting until you regenerate the report.</p>
+    </div>
+    <div class="card accent-purple" id="reportCard" style="display:none;">
+      <table class="report-grid" id="flightCountTable"></table>
+      <div style="height:18px;"></div>
+      <table class="report-grid" id="briefingTable"></table>
+    </div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section class="tab-section" id="tab-admin">
+    <div class="card accent-red">
+      <h2>Create User</h2>
+      <form id="userForm">
+        <div class="row">
+          <div><label>Username</label><input id="newUsername" required></div>
+          <div><label>Full Name</label><input id="newFullName" required></div>
+          <div><label>Temporary Password</label><input id="newPassword" type="text" required></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Role</label>
+            <select id="newRole">
+              <option value="shift_user">Shift User</option>
+              <option value="duty_manager">Duty Manager</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div>
+            <label>Home AOC (optional)</label>
+            <select id="newAoc">
+              <option value="">-- none --</option>
+              <option value="G9">G9</option>
+              <option value="E5">E5</option>
+              <option value="3L">3L</option>
+              <option value="3O">3O</option>
+              <option value="9P">9P</option>
+              <option value="4P">4P</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit">Create User</button>
+      </form>
+      <div id="adminMsg"></div>
+    </div>
+    <div class="card accent-red">
+      <h2>Users</h2>
+      <div id="usersTable">Loading...</div>
+    </div>
+  </section>
+
+  <!-- ============ ACCOUNT ============ -->
+  <section class="tab-section" id="tab-account">
+    <div class="card accent-slate" style="max-width:480px;">
+      <h2>Change Password</h2>
+      <form id="pwForm">
+        <label>Current Password</label>
+        <input type="password" id="currentPassword" required>
+        <label>New Password (min 8 characters)</label>
+        <input type="password" id="newAccountPassword" required minlength="8">
+        <button type="submit">Update Password</button>
+      </form>
+      <div id="accountMsg"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ EDIT RECORD MODAL ============ -->
+<div class="modal-overlay" id="editRecordModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Edit Logged Record</h2>
+      <button type="button" class="modal-close" id="editModalCloseBtn" title="Close" aria-label="Close">&times;</button>
+    </div>
+    <form id="editRecordForm">
+      <div class="row">
+        <div>
+          <label for="edit_record_date">Date</label>
+          <input type="date" id="edit_record_date" required>
+        </div>
+        <div>
+          <label for="edit_aoc">AOC <span class="small" id="editAocAutoHint">(auto from flight number)</span></label>
+          <select id="edit_aoc" required>
+            <option value="G9">G9</option>
+            <option value="E5">E5</option>
+            <option value="3L">3L</option>
+            <option value="3O">3O</option>
+            <option value="9P">9P</option>
+            <option value="4P">4P</option>
+          </select>
+        </div>
+        <div>
+          <label for="edit_category">Category</label>
+          <select id="edit_category" required>
+            <option value="DELAY">Delay</option>
+            <option value="GTB">GTB (Ground Turn Back)</option>
+            <option value="ATB">ATB (Air Turn Back)</option>
+            <option value="INCIDENT">Incident</option>
+            <option value="DIVERSION">Diversion</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="edit_flight_number">Flight Number</label>
+          <input id="edit_flight_number" placeholder="e.g. 3O828">
+        </div>
+        <div>
+          <label for="edit_route">Route</label>
+          <input id="edit_route" placeholder="e.g. CDG-RBA">
+        </div>
+        <div>
+          <label for="edit_registration">Registration</label>
+          <input id="edit_registration" placeholder="e.g. A6-AUD">
+        </div>
+      </div>
+
+      <label for="edit_reason">Reason / Description</label>
+      <textarea id="edit_reason" required></textarea>
+
+      <label style="margin-top:22px;">
+        <input type="checkbox" id="edit_breakdownToggle" style="width:auto; display:inline-block; vertical-align:middle; margin-right:8px;">
+        Break the delay down into multiple reasons (a flight can be delayed for more than one reason)
+      </label>
+
+      <div id="editManualDelayBox">
+        <label for="edit_delay_minutes">Total Delay Duration (minutes)</label>
+        <input type="number" min="0" id="edit_delay_minutes" placeholder="e.g. 78">
+      </div>
+
+      <div id="editBreakdownBox" class="breakdown-box" style="display:none;">
+        <div id="editBreakdownRows"></div>
+        <button type="button" class="ghost small-btn" id="editAddBreakdownRowBtn">+ Add Reason</button>
+        <div class="breakdown-total" id="editBreakdownTotal">Total delay from breakdown: 0 minutes</div>
+      </div>
+
+      <label for="edit_downstream_impact">Downstream / Rotational Impact (optional)</label>
+      <textarea id="edit_downstream_impact" placeholder="e.g. 3L141 AUH/MAA - 100 mins&#10;3L424 AUH/CAI - 35 mins"></textarea>
+
+      <div id="editRecordMsg"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="ghost" id="editCancelBtn">Cancel</button>
+        <button type="submit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/common.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,662 @@
+:root {
+  --brand-red: #a01f2d;
+  --brand-red-dark: #7a1620;
+  --brand-orange: #e8712f;
+  --brand-teal: #0d9488;
+  --brand-blue: #2563eb;
+  --brand-purple: #7c3aed;
+  --brand-amber: #d97706;
+  --brand-cyan: #0891b2;
+  --brand-slate: #475569;
+  --brand-gray: #8c8c8c;
+  --brand-gray-light: #eef0f2;
+  --brand-green-light: #d9ede1;
+  --text-dark: #1c1c1c;
+  --border: #333;
+  --danger-text: #b32020;
+  --ok-text: #1c7a3a;
+  --bg: #f0f2f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+  margin: 0;
+}
+
+/* ---------------- Topbar & Tabs ---------------- */
+.topbar {
+  background: linear-gradient(90deg, var(--brand-red) 0%, var(--brand-red-dark) 100%);
+  color: #fff;
+  padding: 14px 24px 0 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.topbar .topbar-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; }
+.topbar h1 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: 0.3px; }
+.topbar .userbox { font-size: 13px; opacity: 0.95; background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 20px; }
+.topbar .logoutLink { color: #fff; text-decoration: none; font-size: 13px; font-weight: 700; margin-left: 14px; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px; }
+.topbar .logoutLink:hover { background: rgba(0,0,0,0.35); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab-btn {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: none;
+  border-bottom: 4px solid transparent;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover { background: rgba(255,255,255,0.24); }
+.tab-btn.active { background: #f0f2f5; color: var(--brand-red-dark); border-bottom: 4px solid var(--tab-accent, var(--brand-amber)); }
+.tab-btn[data-tab="dashboard"] { --tab-accent: var(--brand-blue); }
+.tab-btn[data-tab="entry"] { --tab-accent: var(--brand-teal); }
+.tab-btn[data-tab="multi"] { --tab-accent: var(--brand-cyan); }
+.tab-btn[data-tab="report"] { --tab-accent: var(--brand-purple); }
+.tab-btn[data-tab="admin"] { --tab-accent: var(--brand-red); }
+.tab-btn[data-tab="account"] { --tab-accent: var(--brand-slate); }
+
+.container { max-width: 1500px; margin: 24px auto; padding: 0 24px; }
+.tab-section { display: none; }
+.tab-section.active { display: block; }
+
+.card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-left: 6px solid var(--accent, var(--brand-red));
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+}
+.card.accent-blue { --accent: var(--brand-blue); }
+.card.accent-teal { --accent: var(--brand-teal); }
+.card.accent-cyan { --accent: var(--brand-cyan); }
+.card.accent-orange { --accent: var(--brand-orange); }
+.card.accent-purple { --accent: var(--brand-purple); }
+.card.accent-red { --accent: var(--brand-red); }
+.card.accent-slate { --accent: var(--brand-slate); }
+
+.card h2 {
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent, var(--brand-red-dark));
+  margin-top: 0;
+  border-bottom: 2px solid var(--brand-gray-light);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+label { display: block; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; margin-top: 18px; color: #333; }
+input, select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #c7ccd1;
+  border-radius: 6px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent, var(--brand-blue));
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+
+.row { display: flex; gap: 20px; flex-wrap: wrap; }
+.row > div { flex: 1; min-width: 240px; }
+.row.tight > div { min-width: 160px; }
+
+button, .btn {
+  background: var(--accent, var(--brand-red));
+  color: #fff;
+  border: none;
+  padding: 12px 22px;
+  border-radius: 6px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 18px;
+  display: inline-block;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+button:hover, .btn:hover { filter: brightness(0.9); }
+button:active, .btn:active { transform: translateY(1px); }
+button.secondary, .btn.secondary { background: var(--brand-slate); }
+button.ghost, .btn.ghost { background: transparent; color: var(--accent, var(--brand-red)); border: 2px solid var(--accent, var(--brand-red)); box-shadow: none; }
+button.danger { background: var(--danger-text); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+button.small-btn { padding: 6px 12px; font-size: 12.5px; margin-top: 0; }
+
+.msg { padding: 12px 16px; border-radius: 6px; margin-top: 14px; font-size: 14px; font-weight: 600; }
+.msg.error { background: #fdecea; color: var(--danger-text); border: 1px solid #f5b8b0; }
+.msg.success { background: var(--brand-green-light); color: var(--ok-text); border: 1px solid #b6dcc4; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { border: 1px solid #ccd2d8; padding: 10px; text-align: left; vertical-align: top; }
+th { background: var(--brand-slate); color: #fff; text-transform: uppercase; font-size: 12px; letter-spacing: 0.3px; }
+tbody tr:nth-child(even) { background: #f7f8fa; }
+
+.badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.3px; }
+.badge.INCIDENT { background: #fde0e0; color: #a01f2d; }
+.badge.DELAY { background: #fef3c7; color: #92610a; }
+.badge.GTB { background: #dbeafe; color: #1d4ed8; }
+.badge.ATB { background: #ede9fe; color: #6d28d9; }
+.badge.DIVERSION { background: #ffedd5; color: #c2410c; }
+.badge.open { background: #fde0e0; color: #a01f2d; }
+.badge.closed { background: #d1fae5; color: #047857; }
+
+.stat-tiles { display: flex; gap: 16px; flex-wrap: wrap; }
+.stat-tile {
+  flex: 1; min-width: 130px; border-radius: 8px; padding: 16px; text-align: center; color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.stat-tile .num { font-size: 28px; font-weight: 800; }
+.stat-tile .lbl { font-size: 11.5px; text-transform: uppercase; margin-top: 4px; opacity: 0.9; letter-spacing: 0.3px; }
+.stat-tile.t-total { background: linear-gradient(135deg, var(--brand-slate), #334155); }
+.stat-tile.t-incident { background: linear-gradient(135deg, #dc2626, #a01f2d); }
+.stat-tile.t-delay { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.stat-tile.t-gtb { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.stat-tile.t-atb { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.stat-tile.t-diversion { background: linear-gradient(135deg, #fb923c, #c2410c); }
+.stat-tile.t-time { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+
+/* ---- Delay breakdown builder ---- */
+.breakdown-box { border: 2px dashed #c7ccd1; border-radius: 8px; padding: 14px; margin-top: 10px; background: #fbfbfc; }
+.breakdown-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.breakdown-row select, .breakdown-row input { margin: 0; }
+.breakdown-row .bd-tag { flex: 2; }
+.breakdown-row .bd-minutes { flex: 1; min-width: 100px; }
+.breakdown-row .bd-note { flex: 3; }
+.breakdown-row .bd-remove {
+  background: var(--danger-text); color: #fff; border: none; border-radius: 6px; width: 34px; height: 34px;
+  font-weight: 800; cursor: pointer; flex: 0 0 34px; margin: 0;
+}
+.breakdown-total { margin-top: 10px; font-weight: 800; font-size: 15px; color: var(--brand-teal); }
+.breakdown-total.mismatch { color: var(--danger-text); }
+
+/* ---------------- Snapshot report (mirrors the OCC daily briefing template) ---------------- */
+.report-grid { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.report-grid th, .report-grid td { border: 1px solid #222; padding: 8px 10px; font-size: 12.5px; vertical-align: top; }
+.report-grid .title-row td { background: linear-gradient(90deg, var(--brand-slate), #334155); color: #fff; text-align: center; font-weight: 800; font-size: 15px; letter-spacing: 0.4px; }
+.report-grid .date-cell { background: var(--brand-green-light); font-weight: 800; text-align: center; }
+.report-grid .aoc-header { background: linear-gradient(180deg, var(--brand-red), var(--brand-red-dark)); color: #fff; text-align: center; font-weight: 800; }
+.report-grid .row-label { background: var(--brand-slate); color: #fff; font-weight: 800; text-align: center; }
+.report-grid .num-cell { text-align: center; font-weight: 800; font-size: 15px; color: var(--brand-red-dark); }
+.report-grid .events-cell { min-height: 120px; }
+.report-grid .event { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; }
+.report-grid .event:last-child { border-bottom: none; }
+.report-grid .event .flight { font-weight: 800; text-decoration: underline; display: block; color: var(--brand-red-dark); }
+.report-grid .event .delay { color: var(--danger-text); font-weight: 800; }
+.report-grid .event .impact { margin-top: 4px; font-style: italic; color: #444; }
+.report-grid .event .bd-line { margin-top: 3px; padding-left: 10px; font-size: 11.5px; color: #333; }
+.report-grid .event .bd-line b { color: var(--brand-slate); }
+
+/* Multiple Delayed Flight Event: one reason heading, many flights listed
+   underneath it instead of repeating the reason per flight. */
+.report-grid .event.event-group { border-left: 3px solid var(--brand-cyan); padding-left: 8px; }
+.report-grid .event .mf-flight-list { margin-top: 6px; }
+.report-grid .event .mf-flight-line { margin-top: 3px; font-size: 11.5px; }
+.report-grid .event .mf-flight-line .fno { font-weight: 800; text-decoration: underline; color: var(--brand-red-dark); }
+.report-grid .event .mf-flight-line .delay-inline { margin-left: 5px; color: var(--danger-text); font-weight: 700; }
+.report-grid .nil { text-align: center; font-weight: 800; padding-top: 40px; color: #888; }
+
+.toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.toolbar input[type=date] { width: auto; }
+.toolbar label { margin: 0; }
+
+.small { font-size: 12.5px; color: #666; }
+
+/* ---- Quick Paste Notification Box ---- */
+.quick-paste-box {
+  border: 2px solid var(--brand-teal);
+  border-radius: 10px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f0fdfa 0%, #f7fdfb 100%);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.10);
+  transition: box-shadow 0.2s ease;
+}
+.quick-paste-box:hover {
+  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.18);
+}
+.quick-paste-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  background: linear-gradient(90deg, rgba(13,148,136,0.08) 0%, rgba(13,148,136,0.02) 100%);
+  user-select: none;
+  transition: background 0.15s ease;
+}
+.quick-paste-header:hover {
+  background: linear-gradient(90deg, rgba(13,148,136,0.14) 0%, rgba(13,148,136,0.04) 100%);
+}
+.quick-paste-icon {
+  font-size: 20px;
+}
+.quick-paste-title {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--brand-teal);
+  letter-spacing: 0.3px;
+}
+.quick-paste-hint {
+  font-size: 12px;
+  color: #666;
+  flex: 1;
+}
+.quick-paste-chevron {
+  font-size: 13px;
+  color: var(--brand-teal);
+  transition: transform 0.25s ease;
+  font-weight: 800;
+}
+.quick-paste-chevron.open {
+  transform: rotate(180deg);
+}
+.quick-paste-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
+  padding: 0 18px;
+}
+.quick-paste-body.open {
+  max-height: 600px;
+  padding: 0 18px 18px 18px;
+}
+.quick-paste-textarea {
+  min-height: 100px;
+  font-size: 13.5px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  background: #fff;
+  border: 1.5px solid #b2dfdb;
+  border-radius: 8px;
+  line-height: 1.6;
+  margin-top: 10px;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.quick-paste-textarea:focus {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.quick-paste-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.quick-paste-btn {
+  background: var(--brand-teal) !important;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+.quick-paste-btn:hover {
+  filter: brightness(0.88);
+}
+.quick-paste-btn:active {
+  transform: translateY(1px);
+}
+.quick-paste-btn.secondary {
+  background: transparent !important;
+  color: var(--brand-teal);
+  border: 2px solid var(--brand-teal);
+  box-shadow: none;
+}
+.quick-paste-btn.secondary:hover {
+  background: rgba(13, 148, 136, 0.06) !important;
+}
+.quick-paste-parsed {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.quick-paste-parsed.success {
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
+}
+.quick-paste-parsed.warning {
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+}
+.quick-paste-parsed .parsed-field {
+  display: inline-block;
+  background: rgba(255,255,255,0.6);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin: 1px 2px;
+}
+
+/* Cyan retint of the quick-paste box, used on the Multiple Delayed Flight
+   Event tab (accent-cyan) so the bulk-add box matches that tab's color
+   instead of the Log Delay/Event tab's teal. */
+.quick-paste-box.cyan-variant {
+  border-color: var(--brand-cyan);
+  background: linear-gradient(135deg, #ecfeff 0%, #f7fdfe 100%);
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.10);
+}
+.quick-paste-box.cyan-variant:hover { box-shadow: 0 4px 16px rgba(8, 145, 178, 0.18); }
+.quick-paste-box.cyan-variant .quick-paste-header { background: linear-gradient(90deg, rgba(8,145,178,0.08) 0%, rgba(8,145,178,0.02) 100%); }
+.quick-paste-box.cyan-variant .quick-paste-header:hover { background: linear-gradient(90deg, rgba(8,145,178,0.14) 0%, rgba(8,145,178,0.04) 100%); }
+.quick-paste-box.cyan-variant .quick-paste-title,
+.quick-paste-box.cyan-variant .quick-paste-chevron { color: var(--brand-cyan); }
+.quick-paste-box.cyan-variant .quick-paste-textarea { border-color: #a5e6f5; }
+.quick-paste-box.cyan-variant .quick-paste-textarea:focus { border-color: var(--brand-cyan); box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15); }
+.quick-paste-box.cyan-variant .quick-paste-btn { background: var(--brand-cyan) !important; }
+.quick-paste-box.cyan-variant .quick-paste-btn.secondary { background: transparent !important; color: var(--brand-cyan); border-color: var(--brand-cyan); }
+.quick-paste-box.cyan-variant .quick-paste-btn.secondary:hover { background: rgba(8, 145, 178, 0.06) !important; }
+
+/* Quick Paste: fields the parser could not fill from the pasted text.
+   These need the user's manual attention/confirmation. */
+input.field-needs-manual,
+select.field-needs-manual,
+textarea.field-needs-manual {
+  border-color: var(--brand-amber) !important;
+  background: #fffbeb !important;
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important;
+}
+.field-manual-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-amber);
+}
+.field-manual-note::before {
+  content: "⚠ ";
+}
+.breakdown-row.bd-needs-manual .bd-minutes {
+  border-color: var(--brand-amber) !important;
+  background: #fffbeb !important;
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.18) !important;
+}
+
+/* Row-level Edit/Delete buttons on the Dashboard's logged-records table */
+.row-actions { white-space: nowrap; }
+.row-actions button { margin-top: 0; }
+.row-actions button + button { margin-left: 8px; }
+
+/* Edit Record modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 25, 0.55);
+  z-index: 1000;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #fff;
+  border-radius: 10px;
+  max-width: 900px;
+  width: 100%;
+  padding: 28px 32px 32px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--brand-gray-light);
+  padding-bottom: 12px;
+  margin-bottom: 6px;
+}
+.modal-header h2 {
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--brand-red-dark);
+  margin: 0;
+}
+.modal-close {
+  background: transparent;
+  color: var(--brand-slate);
+  border: none;
+  box-shadow: none;
+  font-size: 26px;
+  line-height: 1;
+  padding: 0 4px;
+  margin: 0;
+  cursor: pointer;
+}
+.modal-close:hover { filter: none; color: var(--brand-red-dark); }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Multiple Delayed Flight Event - repeatable per-flight rows */
+.mf-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.6fr 1.3fr 1.1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.mf-row input { margin: 0; }
+.mf-header {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--brand-slate);
+  margin-bottom: 4px;
+}
+.mf-row .bd-remove {
+  background: transparent;
+  color: var(--danger-text);
+  border: 2px solid var(--danger-text);
+  box-shadow: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0;
+}
+.mf-aoc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  background: var(--brand-gray-light);
+  color: var(--brand-gray);
+}
+.mf-aoc-badge.detected { background: #dbeafe; color: #1d4ed8; }
+.mf-aoc-badge.invalid { background: #fde0e0; color: #a01f2d; }
+
+/* Multiple Delayed Flight Event - free-text entries: each one is its own
+   card (AOC + total delay on one line, then an unrestricted textarea)
+   rather than the fixed-column grid used by the structured rows above,
+   since the whole point is not to force the text into that shape. */
+.mf-freetext-row {
+  position: relative;
+  border: 1.5px solid #a5e6f5;
+  border-radius: 8px;
+  padding: 12px 44px 12px 12px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.mf-freetext-top {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.mf-freetext-top > div { display: flex; flex-direction: column; }
+.mf-freetext-aoc { width: 100px; margin: 0; }
+.mf-freetext-minutes { width: 170px; margin: 0; }
+.mf-freetext-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--brand-slate);
+  margin-bottom: 4px;
+  display: block;
+}
+.mf-freetext-text {
+  width: 100%;
+  min-height: 80px;
+  margin: 0;
+  font-family: inherit;
+}
+.mf-freetext-row .bd-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  color: var(--danger-text);
+  border: 2px solid var(--danger-text);
+  box-shadow: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Daily Report - a free-text affected-flights entry, shown verbatim */
+.report-grid .event .mf-freetext-block {
+  margin-top: 6px;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+/* Daily Report - manual free-text amendment mode */
+#reportCard.editing .report-grid {
+  outline: 2px dashed var(--brand-purple);
+  outline-offset: 6px;
+  background: #faf8ff;
+}
+#reportCard.editing .report-grid td,
+#reportCard.editing .report-grid th {
+  cursor: text;
+}
+#reportCard.editing .report-grid td:focus,
+#reportCard.editing .report-grid th:focus {
+  outline: 2px solid var(--brand-purple);
+  outline-offset: -2px;
+  background: #fff;
+}
+
+
+/* ---- Daily Report: editable PAX flights / aircraft defects cells ---- */
+.report-grid .rep-count-input {
+  width: 100%; max-width: 90px; margin: 0; padding: 4px 6px; text-align: center;
+  font: inherit; font-weight: 800; font-size: 15px; color: var(--brand-red-dark);
+  background: #fffdf3; border: 1px dashed #b9a24a; border-radius: 4px; box-sizing: border-box;
+}
+.report-grid .rep-count-input:focus { outline: 2px solid var(--brand-purple); background: #fff; }
+.report-grid .rep-count-input.rep-count-error { border-color: var(--danger-text); background: #fdecea; }
+.report-grid .rep-count-input::-webkit-outer-spin-button,
+.report-grid .rep-count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.report-grid .rep-count-input { -moz-appearance: textfield; appearance: textfield; }
+
+/* ---- Daily Report: 30-hour delay picker ---- */
+.rd-mode-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 4px 0 8px; }
+.rd-mode-row .rd-mode { display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer; font-size: 14px; }
+.rd-mode-row .rd-mode input { width: auto; margin: 0; }
+.rd-mode-row #rangeInputs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rd-mode-row #rangeInputs input[type=date] { width: auto; margin: 0; padding: 6px 8px; }
+.rd-mode-row .rd-range-label { margin: 0; font-size: 13px; }
+.recent-delays-list {
+  max-height: 340px; overflow-y: auto; border: 1px solid #d5d9de; border-radius: 8px;
+  background: #fff; padding: 4px;
+}
+.rd-item {
+  display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; margin: 0;
+  border-radius: 6px; cursor: pointer; border-bottom: 1px solid #eef0f2;
+  text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 13px; color: var(--text-dark);
+}
+.rd-item:last-child { border-bottom: none; }
+.rd-item:hover { background: #f6f3ff; }
+.rd-item.selected { background: #efe9ff; }
+.rd-item .rd-check { width: auto; margin: 3px 0 0; flex: 0 0 auto; }
+.rd-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.rd-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rd-time { margin-left: auto; }
+.rd-reason { font-weight: 600; word-break: break-word; }
+.rd-flights { color: #555; word-break: break-word; }
+
+/* Printing the Daily Report: the printed page looks like the report on
+   screen - same colors, same font - on a landscape page so the AOC columns
+   are wide enough for flight lists to read on one line. */
+@page { size: A4 landscape; margin: 8mm; }
+@media print {
+  .no-print { display: none !important; }
+  /* The app chrome (title bar, user box, logout link, and every tab
+     button) has no place on a printed page - only the report itself
+     should appear. */
+  .topbar { display: none !important; }
+  body { background: #fff; }
+  .container { max-width: 100%; margin: 0; padding: 0; }
+  .card { box-shadow: none; border: none; padding: 0; margin: 0; border-radius: 0; background: #fff; }
+
+  /* Keep every background colour, gradient and text colour exactly as on
+     screen (browsers drop backgrounds when printing unless told not to). */
+  #reportCard,
+  #reportCard * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .report-grid { font-family: inherit; width: calc(100% - 3px); }
+  .report-grid th, .report-grid td { padding: 5px 7px; font-size: 11px; }
+  .report-grid .title-row td { font-size: 13px; }
+  .report-grid .num-cell { font-size: 13px; }
+  .report-grid .event .mf-flight-line, .report-grid .event .bd-line { font-size: 10.5px; }
+  .report-grid .date-cell { width: 10%; }
+  .report-grid .event .mf-flight-line .delay-inline { white-space: nowrap; }
+  .report-grid .event { break-inside: avoid; }
+  .report-grid tr { break-inside: auto; }
+
+  /* PAX flight / defect cells print as plain numbers (no input box). */
+  .report-grid .rep-count-input {
+    border: none !important; background: transparent !important; outline: none !important;
+    box-shadow: none !important; max-width: none; padding: 0; font-size: 13px;
+    color: var(--brand-red-dark) !important;
+  }
+  .report-grid .rep-count-input::placeholder { color: var(--brand-red-dark) !important; opacity: 1; }
+}
