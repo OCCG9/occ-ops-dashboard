@@ -598,7 +598,6 @@ function initEntryForm() {
   syncAocFromFlight('flight_number', 'aoc', 'aocAutoHint');
 
   // Initialize Quick Paste
-  initQuickPaste();
 
   document.getElementById('addBreakdownRowBtn').addEventListener('click', () => addBreakdownRow());
 
@@ -944,10 +943,6 @@ function multiFreeTextRowTemplate() {
             <option value="4P">4P</option>
           </select>
         </div>
-        <div>
-          <label class="mf-freetext-label">Total Delay (mins)</label>
-          <input type="number" min="0" class="mf-freetext-minutes" placeholder="e.g. 45">
-        </div>
       </div>
       <label class="mf-freetext-label">Affected Flights - any format, shown exactly as typed</label>
       <textarea class="mf-freetext-text" placeholder="Type or paste the affected flights however you like - flight numbers, routes, notes, anything. It's saved and shown in the report exactly as written here."></textarea>
@@ -965,9 +960,8 @@ function addMultiFreeTextRow() {
 }
 
 // Reads every free-text entry that has some text in it (an unused spare
-// card is ignored, same as an empty structured row). A total delay is
-// required for each one that has text, since there's nothing to derive it
-// from once the text itself isn't being parsed.
+// card is ignored, same as an empty structured row). No delay minutes are
+// captured for free-text entries.
 function collectMultiFreeText() {
   const rows = document.querySelectorAll('#mfFreeTextRows .mf-freetext-row');
   const entries = [];
@@ -976,12 +970,7 @@ function collectMultiFreeText() {
     const text = row.querySelector('.mf-freetext-text').value;
     if (!text.trim()) return;
     const aoc = row.querySelector('.mf-freetext-aoc').value;
-    const minutesRaw = row.querySelector('.mf-freetext-minutes').value;
-    if (minutesRaw === '' || isNaN(Number(minutesRaw)) || Number(minutesRaw) < 0) {
-      errors.push(`Free-text entry #${i + 1}: enter the total delay in minutes.`);
-      return;
-    }
-    entries.push({ aoc, text: text.trim(), delay_minutes: minutesRaw });
+    entries.push({ aoc, text: text.trim() });
   });
   return { entries, errors };
 }
@@ -1063,7 +1052,7 @@ function initMultiFlightTab() {
         batch_id: batchId,
         aoc: entry.aoc,
         flights_free_text: entry.text,
-        delay_minutes: entry.delay_minutes,
+        delay_minutes: null,
       };
       try {
         await apiFetch('/api/records', { method: 'POST', body: JSON.stringify(body) });
@@ -1085,110 +1074,216 @@ function initMultiFlightTab() {
 // ---------------------------------------------------------------
 // Daily Report
 // ---------------------------------------------------------------
+// The report is built with email-safe HTML: plain tables, solid colours
+// (no gradients), Arial, and every style written inline on the element
+// (plus bgcolor attributes for Outlook). That way it keeps its look when
+// copied into an email. All report text is converted to CAPITALS in the
+// HTML itself (not just displayed that way), so it stays upper-case when
+// pasted anywhere.
+const RPT = {
+  font: 'Arial, Helvetica, sans-serif',
+  border: '#222222',
+  title: '#334155',
+  aoc: '#a01f2d',
+  label: '#475569',
+  date: '#d9ede1',
+  dark: '#1c1c1c',
+  red: '#7a1620',
+  delay: '#b32020',
+  muted: '#888888',
+  group: '#0891b2',
+  badge: {
+    DELAY: ['#fef3c7', '#92610a'],
+    GTB: ['#dbeafe', '#1d4ed8'],
+    ATB: ['#ede9fe', '#6d28d9'],
+    INCIDENT: ['#fde0e0', '#a01f2d'],
+    DIVERSION: ['#ffedd5', '#c2410c'],
+  },
+  tiles: [
+    { code: 'GTB', label: 'GTB', bg: '#2563eb' },
+    { code: 'ATB', label: 'ATB', bg: '#7c3aed' },
+    { code: 'INCIDENT', label: 'INCIDENTS', bg: '#dc2626' },
+    { code: 'DIVERSION', label: 'DIVERSIONS', bg: '#ea580c' },
+  ],
+};
+// Upper-cases and escapes a piece of report text.
+const UP = (s) => escapeHtml(String(s == null ? '' : s).toUpperCase());
+
+function rptCell(content, { bg, color = RPT.dark, align = 'left', bold = false, size = 13, width, colspan, extra = '' } = {}) {
+  const style = [
+    `border:1px solid ${RPT.border}`, 'padding:8px 10px', 'vertical-align:top',
+    `font-family:${RPT.font}`, `font-size:${size}px`, `color:${color}`, `text-align:${align}`,
+    bold ? 'font-weight:bold' : '', bg ? `background-color:${bg}` : '', width ? `width:${width}` : '', extra,
+  ].filter(Boolean).join(';');
+  return `<td${colspan ? ` colspan="${colspan}"` : ''}${bg ? ` bgcolor="${bg}"` : ''}${width ? ` width="${width}"` : ''} align="${align}" valign="top" style="${style}">${content}</td>`;
+}
+// Gives a report table the inline attributes email clients need.
+function styleReportTable(id) {
+  const t = document.getElementById(id);
+  t.setAttribute('width', '100%');
+  t.setAttribute('cellpadding', '0');
+  t.setAttribute('cellspacing', '0');
+  t.setAttribute('border', '1');
+  t.setAttribute('style', `border-collapse:collapse;width:100%;table-layout:fixed;font-family:${RPT.font};border:1px solid ${RPT.border};`);
+}
+
 function renderReport(data) {
   const { date, aocs, totals } = data;
-  const dateLabel = data.rangeFrom ? `${fmtDateLabel(data.rangeFrom)} to ${fmtDateLabel(date)}` : fmtDateLabel(date);
+  const dateLabel = UP(data.rangeFrom ? `${fmtDateLabel(data.rangeFrom)} to ${fmtDateLabel(date)}` : fmtDateLabel(date));
+  const ncol = aocs.length + 2;
+  const labelW = '12%';
 
-  const fcHead = `
-    <tr class="title-row"><td colspan="${aocs.length + 2}">DAILY FLIGHT COUNT</td></tr>
+  // --- Event tiles: GTB / ATB / INCIDENTS / DIVERSIONS in this report ---
+  // Each affected flight counts once (a multi-flight event counts every flight).
+  const counts = { GTB: 0, ATB: 0, INCIDENT: 0, DIVERSION: 0 };
+  aocs.forEach((a) => a.events.forEach((ev) => {
+    if (counts[ev.category] === undefined) return;
+    counts[ev.category] += ev.isGroup ? ev.flights.length : 1;
+  }));
+  const tileCells = RPT.tiles.map((t) => `
+    <td bgcolor="${t.bg}" width="25%" align="center" valign="middle" style="background-color:${t.bg};color:#ffffff;font-family:${RPT.font};text-align:center;padding:14px 8px;border-radius:8px;width:25%;">
+      <div style="font-size:30px;font-weight:bold;line-height:1.1;color:#ffffff;">${counts[t.code]}</div>
+      <div style="font-size:12px;font-weight:bold;letter-spacing:0.5px;margin-top:4px;color:#ffffff;">${t.label}</div>
+    </td>`).join('');
+  document.getElementById('eventTilesTable').innerHTML = `<tr>${tileCells}</tr>`;
+
+  // --- Daily flight count ---
+  const titleRow = (text, span) => `<tr>${rptCell(text, { bg: RPT.title, color: '#ffffff', align: 'center', bold: true, size: 15, colspan: span })}</tr>`;
+  // Fixed, equal column widths so the layout holds even without the site's stylesheet (e.g. in an email).
+  const aocHeadsW = (w) => aocs.map((a) => rptCell(UP(a.code), { bg: RPT.aoc, color: '#ffffff', align: 'center', bold: true, width: w })).join('');
+  const fcColW = `${(88 / (aocs.length + 1)).toFixed(2)}%`;
+  const brColW = `${(88 / aocs.length).toFixed(2)}%`;
+  const fcHead = titleRow('DAILY FLIGHT COUNT', ncol) + `
     <tr>
-      <td class="date-cell">${dateLabel}</td>
-      ${aocs.map((a) => `<th class="aoc-header">${a.code}</th>`).join('')}
-      <th class="aoc-header">TOTAL</th>
-    </tr>
-  `;
+      ${rptCell(dateLabel, { bg: RPT.date, align: 'center', bold: true, width: labelW })}
+      ${aocHeadsW(fcColW)}
+      ${rptCell('TOTAL', { bg: RPT.aoc, color: '#ffffff', align: 'center', bold: true, width: fcColW })}
+    </tr>`;
   // PAX flights / aircraft defects are typed straight into the report. Each
   // value is saved for the report date as soon as it is changed, and the
-  // TOTAL column is recalculated live.
-  const countCell = (kind, a) => `<td class="num-cell"><input type="number" min="0" class="rep-count-input" data-kind="${kind}" data-aoc="${a.code}" value="${(kind === 'pax' ? a.paxFlights : a.aircraftDefects) ?? ''}" placeholder="-" aria-label="${kind === 'pax' ? 'PAX flights' : 'Aircraft defects'} ${a.code}"></td>`;
-  const paxRow = `
+  // TOTAL column is recalculated live. "Copy for Email" swaps the boxes for
+  // plain numbers.
+  const countInput = (kind, a) => `<input type="number" min="0" class="rep-count-input" data-kind="${kind}" data-aoc="${a.code}" value="${(kind === 'pax' ? a.paxFlights : a.aircraftDefects) ?? ''}" placeholder="-" aria-label="${kind === 'pax' ? 'PAX flights' : 'Aircraft defects'} ${a.code}">`;
+  const numStyle = { align: 'center', bold: true, size: 15, color: RPT.red };
+  const countRow = (label, kind, totalId, total) => `
     <tr>
-      <td class="row-label">PAX FLIGHTS</td>
-      ${aocs.map((a) => countCell('pax', a)).join('')}
-      <td class="num-cell total-cell" id="repTotalPax">${totals.paxFlights}</td>
-    </tr>
-  `;
-  const defectRow = `
-    <tr>
-      <td class="row-label">AIRCRAFT DEFECTS</td>
-      ${aocs.map((a) => countCell('defects', a)).join('')}
-      <td class="num-cell total-cell" id="repTotalDefects">${totals.aircraftDefects}</td>
-    </tr>
-  `;
-  document.getElementById('flightCountTable').innerHTML = fcHead + paxRow + defectRow;
+      ${rptCell(label, { bg: RPT.label, color: '#ffffff', align: 'center', bold: true })}
+      ${aocs.map((a) => rptCell(countInput(kind, a), numStyle)).join('')}
+      ${rptCell(String(total), numStyle).replace('<td', `<td id="${totalId}"`)}
+    </tr>`;
+  document.getElementById('flightCountTable').innerHTML = fcHead
+    + countRow('PAX FLIGHTS', 'pax', 'repTotalPax', totals.paxFlights)
+    + countRow('AIRCRAFT DEFECTS', 'defects', 'repTotalDefects', totals.aircraftDefects);
 
-  const catBadge = (c) => `<span class="badge ${c.category}">${c.category}</span>`;
-  // A free-text affected-flights entry (see the Multiple Delayed Flight
-  // Event tab) has no flight_number/route/registration - it's arbitrary
-  // text typed by the user, saved and shown exactly as written. Escaped for
-  // safety, then rendered with CSS white-space:pre-wrap so its own line
-  // breaks and spacing come through unchanged, with nothing extracted or
-  // reformatted out of it.
-  const freeTextBlock = (text) => `<div class="mf-freetext-block">${escapeHtml(text)}</div>`;
-  const eventHtml = (ev) => {
-    // Flights saved together from the Multiple Delayed Flight Event tab:
-    // one shared reason heading, every flight listed underneath it, instead
-    // of repeating the same reason text once per flight.
+  // --- Briefing ---
+  const badge = (cat) => {
+    const [bg, fg] = RPT.badge[cat] || ['#eeeeee', '#333333'];
+    return `<span style="background-color:${bg};color:${fg};font-weight:bold;font-size:11px;padding:2px 8px;border-radius:10px;font-family:${RPT.font};">${UP(cat)}</span>`;
+  };
+  const flightStyle = `font-weight:bold;text-decoration:underline;color:${RPT.red};`;
+  const delayStyle = `font-weight:bold;color:${RPT.delay};`;
+  // Free-text affected flights: shown exactly as typed (line breaks kept), in capitals.
+  const freeText = (text) => `<div style="margin-top:6px;font-size:12px;">${UP(text).replace(/\n/g, '<br>')}</div>`;
+  const impact = (text) => `<div style="margin-top:4px;font-style:italic;color:#444444;">${UP(text).replace(/\n/g, '<br>')}</div>`;
+  const flightLabel = (f) => UP([f.flightNumber, f.route].filter(Boolean).join(' ')) + (f.registration ? ' - ' + UP(f.registration) : '');
+
+  const eventHtml = (ev, isLast) => {
+    const sep = isLast ? '' : 'border-bottom:1px dashed #cccccc;';
     if (ev.isGroup) {
-      const flightLines = ev.flights.map((f) => {
-        if (f.flightsFreeText) {
-          return `
-            <div class="mf-flight-line">
-              ${freeTextBlock(f.flightsFreeText)}
-              ${f.delayLabel ? `<span class="delay-inline">(${f.delayLabel})</span>` : ''}
-            </div>
-          `;
-        }
-        return `
-        <div class="mf-flight-line">
-          <span class="fno">${escapeHtml([f.flightNumber, f.route].filter(Boolean).join(' '))}${f.registration ? ' - ' + escapeHtml(f.registration) : ''}</span>
-          ${f.delayLabel ? `<span class="delay-inline">(${f.delayLabel})</span>` : ''}
-        </div>
-      `;
-      }).join('');
+      // Flights saved together from the Multiple Delayed Flight Event tab:
+      // one shared reason, every flight listed underneath it.
+      const lines = ev.flights.map((f) => `
+        <div style="margin-top:3px;font-size:12px;">
+          ${f.flightsFreeText ? freeText(f.flightsFreeText) : `<span style="${flightStyle}">${flightLabel(f)}</span>`}
+          ${f.delayLabel ? ` <span style="${delayStyle}">(${UP(f.delayLabel)})</span>` : ''}
+        </div>`).join('');
       return `
-      <div class="event event-group">
-        <div>${catBadge(ev)} ${escapeHtml(ev.reasonClean || ev.reason)}</div>
-        <div class="mf-flight-list">${flightLines}</div>
-        ${ev.downstreamImpact ? `<div class="impact">${escapeHtml(ev.downstreamImpact).replace(/\n/g, '<br>')}</div>` : ''}
-      </div>
-    `;
+        <div style="margin-bottom:12px;padding:0 0 10px 8px;border-left:3px solid ${RPT.group};${sep}">
+          <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason)}</div>
+          <div style="margin-top:6px;">${lines}</div>
+          ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
+        </div>`;
     }
-    const bdHtml = (ev.breakdown && ev.breakdown.length)
-      ? ev.breakdown.map((b) => `<div class="bd-line">&bull; <b>${escapeHtml(b.reasonTagName)}</b>: ${escapeHtml(b.noteClean || b.note || '')} ${b.minutesLabel ? '(' + b.minutesLabel + ')' : ''}</div>`).join('')
-      : '';
+    const bd = (ev.breakdown || []).map((b) => `
+      <div style="margin-top:3px;padding-left:10px;font-size:12px;color:#333333;">&bull; <b style="color:${RPT.label};">${UP(b.reasonTagName)}</b>: ${UP(b.noteClean || b.note || '')} ${b.minutesLabel ? '(' + UP(b.minutesLabel) + ')' : ''}</div>`).join('');
     return `
-    <div class="event">
-      ${ev.flightNumber || ev.route ? `<span class="flight">${escapeHtml([ev.flightNumber, ev.route].filter(Boolean).join(' '))}${ev.registration ? ' - ' + escapeHtml(ev.registration) : ''}</span>` : ''}
-      <div>${catBadge(ev)} ${escapeHtml(ev.reasonClean || ev.reason)}</div>
-      ${ev.flightsFreeText ? freeTextBlock(ev.flightsFreeText) : ''}
-      ${bdHtml}
-      ${ev.downstreamImpact ? `<div class="impact">${escapeHtml(ev.downstreamImpact).replace(/\n/g, '<br>')}</div>` : ''}
-      ${ev.delayLabel ? `<div class="delay">(TOTAL DELAY ${ev.delayLabel})</div>` : ''}
-    </div>
-  `;
+      <div style="margin-bottom:12px;padding-bottom:10px;${sep}">
+        ${ev.flightNumber || ev.route ? `<div style="${flightStyle}">${flightLabel(ev)}</div>` : ''}
+        <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason)}</div>
+        ${ev.flightsFreeText ? freeText(ev.flightsFreeText) : ''}
+        ${bd}
+        ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
+        ${ev.delayLabel ? `<div style="${delayStyle}">(TOTAL DELAY ${UP(ev.delayLabel)})</div>` : ''}
+      </div>`;
   };
 
-  const briefHead = `<tr class="title-row"><td colspan="${aocs.length + 1}">OCC DAILY OPERATIONS BRIEFING</td></tr>`;
-  const briefAocHead = `
+  const briefing = titleRow('OCC DAILY OPERATIONS BRIEFING', aocs.length + 1) + `
     <tr>
-      <td class="date-cell">${dateLabel}</td>
-      ${aocs.map((a) => `<th class="aoc-header">${a.code}</th>`).join('')}
+      ${rptCell(dateLabel, { bg: RPT.date, align: 'center', bold: true, width: labelW })}
+      ${aocHeadsW(brColW)}
     </tr>
-  `;
-  const briefRow = `
     <tr>
-      <td class="row-label">SIGNIFICANT<br>EVENTS<br>-24H</td>
-      ${aocs.map((a) => `
-        <td class="events-cell">
-          ${a.events.length ? a.events.map(eventHtml).join('') : '<div class="nil">NIL</div>'}
-        </td>
-      `).join('')}
-    </tr>
-  `;
-  document.getElementById('briefingTable').innerHTML = briefHead + briefAocHead + briefRow;
+      ${rptCell('SIGNIFICANT<br>EVENTS<br>-24H', { bg: RPT.label, color: '#ffffff', align: 'center', bold: true })}
+      ${aocs.map((a) => rptCell(
+        a.events.length
+          ? a.events.map((ev, i) => eventHtml(ev, i === a.events.length - 1)).join('')
+          : `<div style="text-align:center;font-weight:bold;padding-top:40px;color:${RPT.muted};">NIL</div>`,
+        { size: 12.5, extra: 'height:120px' },
+      )).join('')}
+    </tr>`;
+  document.getElementById('briefingTable').innerHTML = briefing;
+  styleReportTable('flightCountTable');
+  styleReportTable('briefingTable');
 
   document.getElementById('reportCard').style.display = '';
+  document.getElementById('copyEmailBtn').disabled = false;
+}
+
+// Copies the report as rich HTML ready to paste into an email: the PAX
+// flight / defect boxes become plain numbers, and any manual edits made in
+// Edit Report mode are included.
+async function copyReportForEmail() {
+  const status = document.getElementById('reportStatus');
+  const card = document.getElementById('reportCard');
+  if (card.style.display === 'none') { status.textContent = 'Generate the report first.'; return; }
+  const clone = card.cloneNode(true);
+  const liveInputs = card.querySelectorAll('input.rep-count-input');
+  clone.querySelectorAll('input.rep-count-input').forEach((inp, i) => {
+    const v = (liveInputs[i] ? liveInputs[i].value : inp.value).trim();
+    inp.replaceWith(document.createTextNode(v === '' ? '-' : v));
+  });
+  clone.querySelectorAll('[contenteditable]').forEach((el) => el.removeAttribute('contenteditable'));
+  clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+  const tables = Array.from(clone.querySelectorAll('table.rep-email'));
+  const html = `<div style="font-family:${RPT.font};">${tables.map((t) => { t.removeAttribute('class'); return t.outerHTML; }).join('<br>')}</div>`;
+
+  // Plain-text fallback for mail apps that don't accept rich HTML.
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const text = tmp.innerText;
+
+  try {
+    if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw new Error('no clipboard API');
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([html], { type: 'text/html' }),
+      'text/plain': new Blob([text], { type: 'text/plain' }),
+    })]);
+  } catch (e) {
+    // Fallback: select a hidden copy and use the browser's copy command.
+    const holder = document.createElement('div');
+    holder.style.cssText = 'position:fixed;left:-10000px;top:0;background:#ffffff;';
+    holder.innerHTML = html;
+    document.body.appendChild(holder);
+    const range = document.createRange();
+    range.selectNodeContents(holder);
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+    const ok = document.execCommand('copy');
+    sel.removeAllRanges();
+    holder.remove();
+    if (!ok) { status.textContent = 'Could not copy automatically - select the report and press Ctrl+C instead.'; return; }
+  }
+  status.textContent = 'Report copied - paste it into your email (Ctrl+V).';
 }
 
 // Set once the user has typed into the report while Edit Report mode is on.
@@ -1366,6 +1461,7 @@ function initReportTab() {
   document.getElementById('genBtn').addEventListener('click', () => generateReport(false));
   document.getElementById('forceBtn').addEventListener('click', () => generateReport(true));
   document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('copyEmailBtn').addEventListener('click', copyReportForEmail);
   document.getElementById('refreshDelaysBtn').addEventListener('click', loadRecentDelays);
   document.getElementById('rangeFrom').value = yesterdayStr();
   document.getElementById('rangeTo').value = todayStr();

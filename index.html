@@ -6,7 +6,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OCC Daily Operations Dashboard</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="topbar">
@@ -52,24 +52,6 @@
     <div class="card accent-teal">
       <h2>Log a Delay / Incident / GTB / ATB / Diversion</h2>
       <p class="small">Type naturally - grammar and shortening isn't needed here. Spacing and capitalisation are tidied automatically when the daily management report is generated.</p>
-
-      <!-- Quick Paste from Notification -->
-      <div class="quick-paste-box" id="quickPasteBox">
-        <div class="quick-paste-header" id="quickPasteToggle">
-          <span class="quick-paste-icon">📋</span>
-          <span class="quick-paste-title">Quick Paste from Notification</span>
-          <span class="quick-paste-hint">Paste your flight notification and auto-fill the form</span>
-          <span class="quick-paste-chevron" id="quickPasteChevron">▼</span>
-        </div>
-        <div class="quick-paste-body" id="quickPasteBody">
-          <textarea id="quickPasteInput" class="quick-paste-textarea" placeholder="Paste your notification here, e.g.&#10;&#10;FLIGHT DELAY&#10;A6-ATA / G9 555 / SHJ - KHI&#10;DELAY DUE AIRCRAFT TECHNICAL&#10;&#10;Supports multiple lines and formats. Fields will be auto-detected."></textarea>
-          <div class="quick-paste-actions">
-            <button type="button" class="quick-paste-btn" id="quickParseBtn">⚡ Parse & Fill Form</button>
-            <button type="button" class="quick-paste-btn secondary" id="quickClearBtn">Clear</button>
-          </div>
-          <div id="quickPasteMsg"></div>
-        </div>
-      </div>
 
       <form id="entryForm">
         <div class="row">
@@ -203,7 +185,7 @@
           <div class="quick-paste-header" id="mfFreeTextToggle">
             <span class="quick-paste-icon">📝</span>
             <span class="quick-paste-title">Or Add Affected Flights as Free Text</span>
-            <span class="quick-paste-hint">Type the affected flights however you like - no format required - and just add the total delay</span>
+            <span class="quick-paste-hint">Type the affected flights however you like - no format required</span>
             <span class="quick-paste-chevron" id="mfFreeTextChevron">▼</span>
           </div>
           <div class="quick-paste-body" id="mfFreeTextBody">
@@ -251,15 +233,17 @@
         <button id="genBtn">Generate Report</button>
         <button id="forceBtn" class="secondary">Regenerate</button>
         <button id="editReportBtn" class="secondary">Edit Report</button>
+        <button id="copyEmailBtn" class="ghost" disabled>Copy for Email</button>
         <button id="printBtn" class="ghost">Print / Save as PDF</button>
       </div>
       <div id="reportStatus" class="small"></div>
       <p class="small" id="editReportHint" style="display:none;">Editing mode is on - click any text in the report below to amend it by hand. These manual changes are not saved to the database; they stay on screen for printing/exporting until you regenerate the report.</p>
     </div>
     <div class="card accent-purple" id="reportCard" style="display:none;">
-      <table class="report-grid" id="flightCountTable"></table>
+      <table class="rep-email" id="eventTilesTable" width="100%" cellpadding="0" cellspacing="10" border="0" style="width:100%;border-collapse:separate;margin-bottom:8px;"></table>
+      <table class="report-grid rep-email" id="flightCountTable"></table>
       <div style="height:18px;"></div>
-      <table class="report-grid" id="briefingTable"></table>
+      <table class="report-grid rep-email" id="briefingTable"></table>
     </div>
   </section>
 
@@ -405,9 +389,9 @@
   </div>
 </div>
 
-<script src="config.js"></script>
-<script src="supabase.js"></script>
-<script src="common.js"></script>
-<script src="app.js"></script>
+<script src="js/config.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/common.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

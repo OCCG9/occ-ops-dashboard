@@ -24,7 +24,15 @@
       const { error } = await sb.auth.signInWithPassword({ email: usernameToEmail(username), password });
       if (error) {
         if (/rate|too many/i.test(error.message)) throw new Error('Too many attempts. Please wait a few minutes and try again.');
-        throw new Error('Invalid username or password');
+        if (error.code === 'user_banned' || /banned/i.test(error.message)) {
+          throw new Error('Your account is disabled. Please contact an administrator.');
+        }
+        if (error.code === 'invalid_credentials' || /invalid login credentials/i.test(error.message)) {
+          throw new Error('Invalid username or password');
+        }
+        // Anything else is a setup problem (e.g. "Email logins are disabled"),
+        // so show it as-is to help the administrator fix it.
+        throw new Error(`Login unavailable: ${error.message}. Please tell an OCC administrator.`);
       }
       // Remembered so the Daily Report can list the delays of the 30 hours
       // before this login, and to enforce the 12-hour session limit.
