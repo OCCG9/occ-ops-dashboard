@@ -1109,13 +1109,21 @@ const RPT = {
 // Upper-cases and escapes a piece of report text.
 const UP = (s) => escapeHtml(String(s == null ? '' : s).toUpperCase());
 
+function fontColor(content, color, bold = false) {
+  return `<font color="${color}"><span style="color:${color};${bold ? 'font-weight:bold;' : ''}">${content}</span></font>`;
+}
+
 function rptCell(content, { bg, color = RPT.dark, align = 'left', bold = false, size = 13, width, colspan, extra = '' } = {}) {
   const style = [
     `border:1px solid ${RPT.border}`, 'padding:8px 10px', 'vertical-align:top',
     `font-family:${RPT.font}`, `font-size:${size}px`, `color:${color}`, `text-align:${align}`,
     bold ? 'font-weight:bold' : '', bg ? `background-color:${bg}` : '', width ? `width:${width}` : '', extra,
   ].filter(Boolean).join(';');
-  return `<td${colspan ? ` colspan="${colspan}"` : ''}${bg ? ` bgcolor="${bg}"` : ''}${width ? ` width="${width}"` : ''} align="${align}" valign="top" style="${style}">${content}</td>`;
+  // Email programs (Outlook in particular) ignore a text colour set on the
+  // cell, so coloured text (e.g. white headings) is also wrapped in a <font>
+  // tag with the colour set directly on it.
+  const body = color !== RPT.dark ? fontColor(content, color, bold) : content;
+  return `<td${colspan ? ` colspan="${colspan}"` : ''}${bg ? ` bgcolor="${bg}"` : ''}${width ? ` width="${width}"` : ''} align="${align}" valign="top" style="${style}">${body}</td>`;
 }
 // Gives a report table the inline attributes email clients need.
 function styleReportTable(id) {
@@ -1142,8 +1150,8 @@ function renderReport(data) {
   }));
   const tileCells = RPT.tiles.map((t) => `
     <td bgcolor="${t.bg}" width="25%" align="center" valign="middle" style="background-color:${t.bg};color:#ffffff;font-family:${RPT.font};text-align:center;padding:14px 8px;border-radius:8px;width:25%;">
-      <div style="font-size:30px;font-weight:bold;line-height:1.1;color:#ffffff;">${counts[t.code]}</div>
-      <div style="font-size:12px;font-weight:bold;letter-spacing:0.5px;margin-top:4px;color:#ffffff;">${t.label}</div>
+      <div style="font-size:30px;font-weight:bold;line-height:1.1;color:#ffffff;">${fontColor(counts[t.code], '#ffffff', true)}</div>
+      <div style="font-size:12px;font-weight:bold;letter-spacing:0.5px;margin-top:4px;color:#ffffff;">${fontColor(t.label, '#ffffff', true)}</div>
     </td>`).join('');
   document.getElementById('eventTilesTable').innerHTML = `<tr>${tileCells}</tr>`;
 
@@ -1199,17 +1207,17 @@ function renderReport(data) {
         </div>`).join('');
       return `
         <div style="margin-bottom:12px;padding:0 0 10px 8px;border-left:3px solid ${RPT.group};${sep}">
-          <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason)}</div>
+          <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason).replace(/\n/g, '<br>')}</div>
           <div style="margin-top:6px;">${lines}</div>
           ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
         </div>`;
     }
     const bd = (ev.breakdown || []).map((b) => `
-      <div style="margin-top:3px;padding-left:10px;font-size:12px;color:#333333;">&bull; <b style="color:${RPT.label};">${UP(b.reasonTagName)}</b>: ${UP(b.noteClean || b.note || '')} ${b.minutesLabel ? '(' + UP(b.minutesLabel) + ')' : ''}</div>`).join('');
+      <div style="margin-top:3px;padding-left:10px;font-size:12px;color:#333333;">&bull; <b style="color:${RPT.label};">${UP(b.reasonTagName)}</b>: ${UP(b.noteClean || b.note || '').replace(/\n/g, '<br>')} ${b.minutesLabel ? '(' + UP(b.minutesLabel) + ')' : ''}</div>`).join('');
     return `
       <div style="margin-bottom:12px;padding-bottom:10px;${sep}">
         ${ev.flightNumber || ev.route ? `<div style="${flightStyle}">${flightLabel(ev)}</div>` : ''}
-        <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason)}</div>
+        <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason).replace(/\n/g, '<br>')}</div>
         ${ev.flightsFreeText ? freeText(ev.flightsFreeText) : ''}
         ${bd}
         ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}

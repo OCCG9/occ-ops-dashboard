@@ -123,9 +123,14 @@ function fmtDuration(mins) {
 // when no AI key was configured).
 function ruleBasedClean(text) {
   if (!text) return '';
-  let t = String(text).trim().replace(/\s+/g, ' ');
-  t = t.replace(/(^|[.!?]\s+)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase());
-  t = t.replace(/\s+([,.;:])/g, '$1');
+  // Tidy spacing within each line but KEEP the line breaks / paragraphs the
+  // user typed (more than one blank line in a row is reduced to one).
+  let t = String(text).replace(/\r\n?/g, '\n')
+    .split('\n').map((line) => line.trim().replace(/[ \t]+/g, ' ')).join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  t = t.replace(/(^|[.!?]\s+|\n)([a-z])/g, (m, p1, p2) => p1 + p2.toUpperCase());
+  t = t.replace(/[ \t]+([,.;:])/g, '$1');
   return t;
 }
 
