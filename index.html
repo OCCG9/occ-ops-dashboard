@@ -6,7 +6,7 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OCC Daily Operations Dashboard</title>
-<link rel="stylesheet" href="styles.css?v=20261108">
+<link rel="stylesheet" href="styles.css?v=20261109">
 </head>
 <body>
 <div class="topbar">
@@ -233,13 +233,14 @@
         <button id="genBtn">Generate Report</button>
         <button id="forceBtn" class="secondary">Regenerate</button>
         <button id="editReportBtn" class="secondary">Edit Report</button>
-        <button id="copyEmailBtn" class="ghost" disabled>Copy for Email</button>
+        <button id="copyImageBtn" class="ghost" disabled title="Pastes into any email exactly as shown, including the colours">Copy as Image</button>
+        <button id="copyEmailBtn" class="ghost" disabled title="Pastes as an editable table - some email apps drop the heading colours">Copy as Text</button>
         <button id="printBtn" class="ghost">Print / Save as PDF</button>
       </div>
       <div id="reportStatus" class="small"></div>
       <p class="small" id="editReportHint" style="display:none;">Editing mode is on - click any text in the report below to amend it by hand. These manual changes are not saved to the database; they stay on screen for printing/exporting until you regenerate the report.</p>
     </div>
-    <div class="card accent-purple" id="reportCard" style="display:none;">
+    <div class="card accent-red" id="reportCard" style="display:none;">
       <table class="rep-email" id="eventTilesTable" width="100%" cellpadding="0" cellspacing="10" border="0" style="width:100%;border-collapse:separate;margin-bottom:8px;"></table>
       <table class="report-grid rep-email" id="flightCountTable"></table>
       <div style="height:18px;"></div>
@@ -389,9 +390,10 @@
   </div>
 </div>
 
-<script src="config.js?v=20261108"></script>
-<script src="supabase.js?v=20261108"></script>
-<script src="common.js?v=20261108"></script>
-<script src="app.js?v=20261108"></script>
+<script src="config.js?v=20261109"></script>
+<script src="supabase.js?v=20261109"></script>
+<script src="html2canvas.min.js?v=20261109"></script>
+<script src="common.js?v=20261109"></script>
+<script src="app.js?v=20261109"></script>
 </body>
 </html>

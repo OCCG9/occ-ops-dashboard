@@ -1080,30 +1080,29 @@ function initMultiFlightTab() {
 // copied into an email. All report text is converted to CAPITALS in the
 // HTML itself (not just displayed that way), so it stays upper-case when
 // pasted anywhere.
+// Theme: "Charcoal & Red Accent" (Sample B, chosen 9 Nov 2026) - Air Arabia
+// red used sparingly, charcoal title bars, light grey labels, Calibri.
 const RPT = {
-  font: 'Arial, Helvetica, sans-serif',
-  border: '#222222',
-  title: '#334155',
-  aoc: '#a01f2d',
-  label: '#475569',
-  date: '#d9ede1',
-  dark: '#1c1c1c',
-  red: '#7a1620',
-  delay: '#b32020',
-  muted: '#888888',
-  group: '#0891b2',
-  badge: {
-    DELAY: ['#fef3c7', '#92610a'],
-    GTB: ['#dbeafe', '#1d4ed8'],
-    ATB: ['#ede9fe', '#6d28d9'],
-    INCIDENT: ['#fde0e0', '#a01f2d'],
-    DIVERSION: ['#ffedd5', '#c2410c'],
-  },
+  font: "Calibri, Carlito, 'Segoe UI', Arial, sans-serif",
+  border: '#C8C8C8',
+  title: '#3C3C3B',      // charcoal title bars (white text)
+  aoc: '#E41B47',        // Air Arabia red AOC header row (white text)
+  label: '#E9E9E9',      // light grey side labels / date cells
+  labelText: '#3C3C3B',
+  dark: '#1F1F1F',       // body text
+  flight: '#3C3C3B',     // flight line (bold, underlined)
+  num: '#3C3C3B',        // PAX / defect figures
+  delay: '#E41B47',      // "(TOTAL DELAY ...)"
+  muted: '#9A9A9A',
+  sep: '#E3E3E3',
+  // Category tags: small outlined boxes. DELAY in grey, the rest in red.
+  tag: { DELAY: '#6D6E71', GTB: '#E41B47', ATB: '#E41B47', INCIDENT: '#E41B47', DIVERSION: '#E41B47' },
+  // Event tiles: white boxes with a coloured top bar and coloured number.
   tiles: [
-    { code: 'GTB', label: 'GTB', bg: '#2563eb' },
-    { code: 'ATB', label: 'ATB', bg: '#7c3aed' },
-    { code: 'INCIDENT', label: 'INCIDENTS', bg: '#dc2626' },
-    { code: 'DIVERSION', label: 'DIVERSIONS', bg: '#ea580c' },
+    { code: 'GTB', label: 'GTB', color: '#E41B47' },
+    { code: 'ATB', label: 'ATB', color: '#E41B47' },
+    { code: 'INCIDENT', label: 'INCIDENTS', color: '#3C3C3B' },
+    { code: 'DIVERSION', label: 'DIVERSIONS', color: '#3C3C3B' },
   ],
 };
 // Upper-cases and escapes a piece of report text.
@@ -1115,7 +1114,7 @@ function fontColor(content, color, bold = false) {
 
 function rptCell(content, { bg, color = RPT.dark, align = 'left', bold = false, size = 13, width, colspan, extra = '' } = {}) {
   const style = [
-    `border:1px solid ${RPT.border}`, 'padding:8px 10px', 'vertical-align:top',
+    `border:1px solid ${RPT.border}`, 'padding:7px 9px', 'vertical-align:top',
     `font-family:${RPT.font}`, `font-size:${size}px`, `color:${color}`, `text-align:${align}`,
     bold ? 'font-weight:bold' : '', bg ? `background-color:${bg}` : '', width ? `width:${width}` : '', extra,
   ].filter(Boolean).join(';');
@@ -1137,7 +1136,8 @@ function styleReportTable(id) {
 
 function renderReport(data) {
   const { date, aocs, totals } = data;
-  const dateLabel = UP(data.rangeFrom ? `${fmtDateLabel(data.rangeFrom)} to ${fmtDateLabel(date)}` : fmtDateLabel(date));
+  // The report is dated the day it is generated (not the date of the delays).
+  const dateLabel = UP(fmtDateLabel(todayStr()));
   const ncol = aocs.length + 2;
   const labelW = '12%';
 
@@ -1149,9 +1149,9 @@ function renderReport(data) {
     counts[ev.category] += ev.isGroup ? ev.flights.length : 1;
   }));
   const tileCells = RPT.tiles.map((t) => `
-    <td bgcolor="${t.bg}" width="25%" align="center" valign="middle" style="background-color:${t.bg};color:#ffffff;font-family:${RPT.font};text-align:center;padding:14px 8px;border-radius:8px;width:25%;">
-      <div style="font-size:30px;font-weight:bold;line-height:1.1;color:#ffffff;">${fontColor(counts[t.code], '#ffffff', true)}</div>
-      <div style="font-size:12px;font-weight:bold;letter-spacing:0.5px;margin-top:4px;color:#ffffff;">${fontColor(t.label, '#ffffff', true)}</div>
+    <td bgcolor="#ffffff" width="25%" align="center" valign="middle" style="background-color:#ffffff;border:1px solid ${RPT.border};border-top:4px solid ${t.color};font-family:${RPT.font};text-align:center;padding:10px 6px;width:25%;">
+      <div style="font-size:26px;font-weight:bold;line-height:1.1;color:${t.color};">${fontColor(counts[t.code], t.color, true)}</div>
+      <div style="font-size:12px;font-weight:bold;letter-spacing:0.6px;margin-top:2px;color:${RPT.labelText};">${fontColor(t.label, RPT.labelText, true)}</div>
     </td>`).join('');
   document.getElementById('eventTilesTable').innerHTML = `<tr>${tileCells}</tr>`;
 
@@ -1163,7 +1163,7 @@ function renderReport(data) {
   const brColW = `${(88 / aocs.length).toFixed(2)}%`;
   const fcHead = titleRow('DAILY FLIGHT COUNT', ncol) + `
     <tr>
-      ${rptCell(dateLabel, { bg: RPT.date, align: 'center', bold: true, width: labelW })}
+      ${rptCell(dateLabel, { bg: RPT.label, color: RPT.labelText, align: 'center', bold: true, width: labelW })}
       ${aocHeadsW(fcColW)}
       ${rptCell('TOTAL', { bg: RPT.aoc, color: '#ffffff', align: 'center', bold: true, width: fcColW })}
     </tr>`;
@@ -1172,10 +1172,10 @@ function renderReport(data) {
   // TOTAL column is recalculated live. "Copy for Email" swaps the boxes for
   // plain numbers.
   const countInput = (kind, a) => `<input type="number" min="0" class="rep-count-input" data-kind="${kind}" data-aoc="${a.code}" value="${(kind === 'pax' ? a.paxFlights : a.aircraftDefects) ?? ''}" placeholder="-" aria-label="${kind === 'pax' ? 'PAX flights' : 'Aircraft defects'} ${a.code}">`;
-  const numStyle = { align: 'center', bold: true, size: 15, color: RPT.red };
+  const numStyle = { align: 'center', bold: true, size: 14, color: RPT.num };
   const countRow = (label, kind, totalId, total) => `
     <tr>
-      ${rptCell(label, { bg: RPT.label, color: '#ffffff', align: 'center', bold: true })}
+      ${rptCell(label, { bg: RPT.label, color: RPT.labelText, align: 'center', bold: true })}
       ${aocs.map((a) => rptCell(countInput(kind, a), numStyle)).join('')}
       ${rptCell(String(total), numStyle).replace('<td', `<td id="${totalId}"`)}
     </tr>`;
@@ -1185,10 +1185,10 @@ function renderReport(data) {
 
   // --- Briefing ---
   const badge = (cat) => {
-    const [bg, fg] = RPT.badge[cat] || ['#eeeeee', '#333333'];
-    return `<span style="background-color:${bg};color:${fg};font-weight:bold;font-size:11px;padding:2px 8px;border-radius:10px;font-family:${RPT.font};">${UP(cat)}</span>`;
+    const c = RPT.tag[cat] || RPT.labelText;
+    return `<span style="border:1px solid ${c};color:${c};font-weight:bold;font-size:11px;padding:0 5px;font-family:${RPT.font};">${fontColor(UP(cat), c, true)}</span>`;
   };
-  const flightStyle = `font-weight:bold;text-decoration:underline;color:${RPT.red};`;
+  const flightStyle = `font-weight:bold;text-decoration:underline;color:${RPT.flight};`;
   const delayStyle = `font-weight:bold;color:${RPT.delay};`;
   // Free-text affected flights: shown exactly as typed (line breaks kept), in capitals.
   const freeText = (text) => `<div style="margin-top:6px;font-size:12px;">${UP(text).replace(/\n/g, '<br>')}</div>`;
@@ -1196,46 +1196,46 @@ function renderReport(data) {
   const flightLabel = (f) => UP([f.flightNumber, f.route].filter(Boolean).join(' ')) + (f.registration ? ' - ' + UP(f.registration) : '');
 
   const eventHtml = (ev, isLast) => {
-    const sep = isLast ? '' : 'border-bottom:1px dashed #cccccc;';
+    const sep = isLast ? '' : `border-bottom:1px solid ${RPT.sep};`;
     if (ev.isGroup) {
       // Flights saved together from the Multiple Delayed Flight Event tab:
       // one shared reason, every flight listed underneath it.
       const lines = ev.flights.map((f) => `
         <div style="margin-top:3px;font-size:12px;">
-          ${f.flightsFreeText ? freeText(f.flightsFreeText) : `<span style="${flightStyle}">${flightLabel(f)}</span>`}
-          ${f.delayLabel ? ` <span style="${delayStyle}">(${UP(f.delayLabel)})</span>` : ''}
+          ${f.flightsFreeText ? freeText(f.flightsFreeText) : `<span style="${flightStyle}">${fontColor(flightLabel(f), RPT.flight, true)}</span>`}
+          ${f.delayLabel ? ` <span style="${delayStyle}">${fontColor('(' + UP(f.delayLabel) + ')', RPT.delay, true)}</span>` : ''}
         </div>`).join('');
       return `
-        <div style="margin-bottom:12px;padding:0 0 10px 8px;border-left:3px solid ${RPT.group};${sep}">
+        <div style="margin-bottom:12px;padding:0 0 10px 8px;border-left:3px solid ${RPT.border};${sep}">
           <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason).replace(/\n/g, '<br>')}</div>
           <div style="margin-top:6px;">${lines}</div>
           ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
         </div>`;
     }
     const bd = (ev.breakdown || []).map((b) => `
-      <div style="margin-top:3px;padding-left:10px;font-size:12px;color:#333333;">&bull; <b style="color:${RPT.label};">${UP(b.reasonTagName)}</b>: ${UP(b.noteClean || b.note || '').replace(/\n/g, '<br>')} ${b.minutesLabel ? '(' + UP(b.minutesLabel) + ')' : ''}</div>`).join('');
+      <div style="margin-top:3px;padding-left:10px;font-size:12px;color:${RPT.dark};">&bull; <b>${UP(b.reasonTagName)}</b>: ${UP(b.noteClean || b.note || '').replace(/\n/g, '<br>')} ${b.minutesLabel ? '(' + UP(b.minutesLabel) + ')' : ''}</div>`).join('');
     return `
       <div style="margin-bottom:12px;padding-bottom:10px;${sep}">
-        ${ev.flightNumber || ev.route ? `<div style="${flightStyle}">${flightLabel(ev)}</div>` : ''}
+        ${ev.flightNumber || ev.route ? `<div style="${flightStyle}">${fontColor(flightLabel(ev), RPT.flight, true)}</div>` : ''}
         <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason).replace(/\n/g, '<br>')}</div>
         ${ev.flightsFreeText ? freeText(ev.flightsFreeText) : ''}
         ${bd}
         ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
-        ${ev.delayLabel ? `<div style="${delayStyle}">(TOTAL DELAY ${UP(ev.delayLabel)})</div>` : ''}
+        ${ev.delayLabel ? `<div style="${delayStyle}">${fontColor('(TOTAL DELAY ' + UP(ev.delayLabel) + ')', RPT.delay, true)}</div>` : ''}
       </div>`;
   };
 
   const briefing = titleRow('OCC DAILY OPERATIONS BRIEFING', aocs.length + 1) + `
     <tr>
-      ${rptCell(dateLabel, { bg: RPT.date, align: 'center', bold: true, width: labelW })}
+      ${rptCell(dateLabel, { bg: RPT.label, color: RPT.labelText, align: 'center', bold: true, width: labelW })}
       ${aocHeadsW(brColW)}
     </tr>
     <tr>
-      ${rptCell('SIGNIFICANT<br>EVENTS<br>-24H', { bg: RPT.label, color: '#ffffff', align: 'center', bold: true })}
+      ${rptCell('SIGNIFICANT<br>EVENTS<br>-24H', { bg: RPT.label, color: RPT.labelText, align: 'center', bold: true })}
       ${aocs.map((a) => rptCell(
         a.events.length
           ? a.events.map((ev, i) => eventHtml(ev, i === a.events.length - 1)).join('')
-          : `<div style="text-align:center;font-weight:bold;padding-top:40px;color:${RPT.muted};">NIL</div>`,
+          : `<div style="text-align:center;font-weight:bold;padding-top:30px;color:${RPT.muted};">${fontColor('NIL', RPT.muted, true)}</div>`,
         { size: 12.5, extra: 'height:120px' },
       )).join('')}
     </tr>`;
@@ -1245,6 +1245,84 @@ function renderReport(data) {
 
   document.getElementById('reportCard').style.display = '';
   document.getElementById('copyEmailBtn').disabled = false;
+  document.getElementById('copyImageBtn').disabled = false;
+}
+
+// Copies the report as a PICTURE. Pasted into any email it looks exactly as
+// on screen, including white headings, even in mail apps that strip text
+// colours from pasted tables.
+async function copyReportAsImage() {
+  const status = document.getElementById('reportStatus');
+  const card = document.getElementById('reportCard');
+  if (card.style.display === 'none') { status.textContent = 'Generate the report first.'; return; }
+  if (typeof html2canvas !== 'function') { status.textContent = 'Image copy is not available in this browser.'; return; }
+  status.textContent = 'Preparing image...';
+  try {
+    const canvas = await html2canvas(card, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (doc) => {
+        const c = doc.getElementById('reportCard');
+        c.style.boxShadow = 'none';
+        c.style.border = 'none';
+        c.style.borderRadius = '0';
+        c.style.padding = '12px';
+        c.classList.remove('editing');
+        // PAX flight / defect boxes become plain numbers.
+        c.querySelectorAll('input.rep-count-input').forEach((inp) => {
+          const span = doc.createElement('span');
+          span.textContent = inp.value.trim() === '' ? '-' : inp.value.trim();
+          inp.replaceWith(span);
+        });
+      },
+    });
+    const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+    try {
+      if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw new Error('no clipboard');
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      status.textContent = 'Report image copied - paste it into your email (Ctrl+V).';
+    } catch (e) {
+      // Browser can't put images on the clipboard: download the picture instead.
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `OCC-Daily-Report-${REPORT_DATE || todayStr()}.png`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      status.textContent = 'Your browser could not copy the image, so it was downloaded instead - attach or insert it into your email.';
+    }
+  } catch (err) {
+    status.textContent = `Could not create the image: ${err.message}`;
+  }
+}
+
+// Print / Save as PDF on ONE long page: the page size is set to the
+// report's own height just before printing (works in Chrome and Edge; set
+// "Paper size" to its default in the print dialog). Other browsers fall
+// back to normal pages.
+function printReportOnePage() {
+  const card = document.getElementById('reportCard');
+  const PAGE_W = 1400; // CSS pixels of report width on the PDF page
+  let style = document.getElementById('onePagePrintStyle');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'onePagePrintStyle';
+    document.head.appendChild(style);
+  }
+  if (card.style.display !== 'none') {
+    const prevWidth = card.style.width;
+    card.style.width = `${PAGE_W}px`;
+    const h = Math.ceil(card.getBoundingClientRect().height);
+    card.style.width = prevWidth;
+    style.textContent = `@media print {
+      @page { size: ${PAGE_W + 40}px ${h + 80}px; margin: 20px; }
+      #reportCard { width: ${PAGE_W}px !important; }
+      .report-grid .event { break-inside: auto; }
+    }`;
+  } else {
+    style.textContent = '';
+  }
+  window.print();
 }
 
 // Copies the report as rich HTML ready to paste into an email: the PAX
@@ -1447,9 +1525,9 @@ async function generateReport(force) {
   const status = document.getElementById('reportStatus');
   const ids = selectedDelayIds();
   const range = currentDelayRange();
-  // Date-range mode dates the report (and its PAX flight / defect figures)
-  // by the end of the range; 30-hour mode uses today.
-  REPORT_DATE = range && range.to ? range.to : todayStr();
+  // The report (and the PAX flight / defect figures typed into it) is
+  // always dated the day it is generated, whichever delays are included.
+  REPORT_DATE = todayStr();
   const rangeFromParam = range && range.from && range.from < REPORT_DATE ? `&from=${range.from}` : '';
   status.textContent = force ? 'Regenerating report...' : 'Generating report...';
   try {
@@ -1468,7 +1546,8 @@ async function generateReport(force) {
 function initReportTab() {
   document.getElementById('genBtn').addEventListener('click', () => generateReport(false));
   document.getElementById('forceBtn').addEventListener('click', () => generateReport(true));
-  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('printBtn').addEventListener('click', printReportOnePage);
+  document.getElementById('copyImageBtn').addEventListener('click', copyReportAsImage);
   document.getElementById('copyEmailBtn').addEventListener('click', copyReportForEmail);
   document.getElementById('refreshDelaysBtn').addEventListener('click', loadRecentDelays);
   document.getElementById('rangeFrom').value = yesterdayStr();

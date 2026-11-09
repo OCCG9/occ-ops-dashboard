@@ -586,10 +586,10 @@ textarea.field-needs-manual {
 /* ---- Daily Report: editable PAX flights / aircraft defects cells ---- */
 .report-grid .rep-count-input {
   width: 100%; max-width: 90px; margin: 0; padding: 4px 6px; text-align: center;
-  font: inherit; font-weight: 800; font-size: 15px; color: var(--brand-red-dark);
-  background: #fffdf3; border: 1px dashed #b9a24a; border-radius: 4px; box-sizing: border-box;
+  font: inherit; font-weight: 700; font-size: 14px; color: #3C3C3B;
+  background: #fafafa; border: 1px dashed #c8c8c8; border-radius: 3px; box-sizing: border-box;
 }
-.report-grid .rep-count-input:focus { outline: 2px solid var(--brand-purple); background: #fff; }
+.report-grid .rep-count-input:focus { outline: 2px solid #E41B47; background: #fff; }
 .report-grid .rep-count-input.rep-count-error { border-color: var(--danger-text); background: #fdecea; }
 .report-grid .rep-count-input::-webkit-outer-spin-button,
 .report-grid .rep-count-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -655,8 +655,11 @@ textarea.field-needs-manual {
   /* PAX flight / defect cells print as plain numbers (no input box). */
   .report-grid .rep-count-input {
     border: none !important; background: transparent !important; outline: none !important;
-    box-shadow: none !important; max-width: none; padding: 0; font-size: 13px;
-    color: var(--brand-red-dark) !important;
+    box-shadow: none !important; max-width: none; padding: 0; font-size: 14px;
+    color: #3C3C3B !important;
   }
-  .report-grid .rep-count-input::placeholder { color: var(--brand-red-dark) !important; opacity: 1; }
+  .report-grid .rep-count-input::placeholder { color: #3C3C3B !important; opacity: 1; }
 }
+
+/* Daily Report theme (Sample B): Calibri throughout the report card. */
+#reportCard, #reportCard .report-grid, #reportCard .rep-count-input { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; }
