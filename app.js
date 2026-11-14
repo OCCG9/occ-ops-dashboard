@@ -4,7 +4,8 @@
 
 const AOC_LIST = ['G9', 'E5', '3L', '3O', '9P', '4P'];
 const DELAY_REASON_TAGS = [
-  { code: 'TECHNICAL', name: 'Technical / AOG' },
+  { code: 'TECHNICAL', name: 'Technical' },
+  { code: 'AOG', name: 'AOG' },
   { code: 'ATC', name: 'ATC / Slot' },
   { code: 'WEATHER', name: 'Weather' },
   { code: 'CREW', name: 'Crew' },
@@ -540,7 +541,8 @@ function recalcBreakdownTotal(rowsContainerId, totalElId) {
 // Auto-detect reason tag from description text
 function detectReasonTag(text) {
   const upper = (text || '').toUpperCase();
-  if (/TECHNICAL|AOG|DEFECT|DAMAGE|FAULT|MECHANICAL|ENGINE|HYDRAULIC|TIRE|WHEEL|BRAKE|APU|ELECTRICAL|PNEUMATIC/i.test(upper)) return 'TECHNICAL';
+  if (/\bAOG\b/i.test(upper)) return 'AOG';
+  if (/TECHNICAL|DEFECT|DAMAGE|FAULT|MECHANICAL|ENGINE|HYDRAULIC|TIRE|WHEEL|BRAKE|APU|ELECTRICAL|PNEUMATIC/i.test(upper)) return 'TECHNICAL';
   if (/ATC|SLOT/i.test(upper)) return 'ATC';
   if (/WEATHER|WIND|STORM|FOG|RAIN|SNOW|THUNDER|VISIBILITY/i.test(upper)) return 'WEATHER';
   if (/CREW|PILOT|CAPTAIN|FIRST\s*OFFICER|CABIN\s*CREW/i.test(upper)) return 'CREW';
