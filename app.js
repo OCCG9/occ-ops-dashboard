@@ -1097,8 +1097,8 @@ const RPT = {
   delay: '#E41B47',      // "(TOTAL DELAY ...)"
   muted: '#9A9A9A',
   sep: '#E3E3E3',
-  // Category tags: small outlined boxes. DELAY in grey, the rest in red.
-  tag: { DELAY: '#6D6E71', GTB: '#E41B47', ATB: '#E41B47', INCIDENT: '#E41B47', DIVERSION: '#E41B47' },
+  // Category tags: small outlined boxes, all in Air Arabia red.
+  tag: { DELAY: '#E41B47', GTB: '#E41B47', ATB: '#E41B47', INCIDENT: '#E41B47', DIVERSION: '#E41B47' },
   // Event tiles: white boxes with a coloured top bar and coloured number.
   tiles: [
     { code: 'GTB', label: 'GTB', color: '#E41B47' },
@@ -1194,7 +1194,14 @@ function renderReport(data) {
   const delayStyle = `font-weight:bold;color:${RPT.delay};`;
   // Free-text affected flights: shown exactly as typed (line breaks kept), in capitals.
   const freeText = (text) => `<div style="margin-top:6px;font-size:12px;">${UP(text).replace(/\n/g, '<br>')}</div>`;
-  const impact = (text) => `<div style="margin-top:4px;font-style:italic;color:#444444;">${UP(text).replace(/\n/g, '<br>')}</div>`;
+  // Downstream / rotational impact: shown under its own "IMPACT" heading,
+  // AFTER the total delay, so it is clear the total belongs to the delayed
+  // flight and the flights listed here are the knock-on effects.
+  const impact = (text) => `
+    <div style="margin-top:6px;padding-top:4px;border-top:1px dotted ${RPT.border};">
+      <div style="font-size:11px;letter-spacing:0.5px;">${fontColor('IMPACT', RPT.labelText, true)}</div>
+      <div style="margin-top:1px;font-style:italic;color:#444444;">${UP(text).replace(/\n/g, '<br>')}</div>
+    </div>`;
   const flightLabel = (f) => UP([f.flightNumber, f.route].filter(Boolean).join(' ')) + (f.registration ? ' - ' + UP(f.registration) : '');
 
   const eventHtml = (ev, isLast) => {
@@ -1222,8 +1229,8 @@ function renderReport(data) {
         <div>${badge(ev.category)} ${UP(ev.reasonClean || ev.reason).replace(/\n/g, '<br>')}</div>
         ${ev.flightsFreeText ? freeText(ev.flightsFreeText) : ''}
         ${bd}
+        ${ev.delayLabel ? `<div style="margin-top:3px;${delayStyle}">${fontColor('(TOTAL DELAY ' + UP(ev.delayLabel) + ')', RPT.delay, true)}</div>` : ''}
         ${ev.downstreamImpact ? impact(ev.downstreamImpact) : ''}
-        ${ev.delayLabel ? `<div style="${delayStyle}">${fontColor('(TOTAL DELAY ' + UP(ev.delayLabel) + ')', RPT.delay, true)}</div>` : ''}
       </div>`;
   };
 
